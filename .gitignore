@@ -1,0 +1,47 @@
+# ─── Python ──────────────────────────────────────────
+ai/venv/
+ai/__pycache__/
+*.pyc
+*.pyo
+
+# ─── Node.js ─────────────────────────────────────────
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# ─── Environment / Secrets ───────────────────────────
+.env
+backend/.env
+
+# ─── Database ────────────────────────────────────────
+*.sqlite
+*.db
+backend/data/*.db
+
+# ─── Uploads ─────────────────────────────────────────
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# ─── OS Files ────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── IDE ─────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ─── Logs ────────────────────────────────────────────
+*.log
+npm-debug.log*
+
+# ─── Build Output ────────────────────────────────────
+dist/
+build/
+frontend/dist/
+
+# ─── Whisper Model Cache ─────────────────────────────
+*.bin
+*.pt
