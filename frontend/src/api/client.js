@@ -48,6 +48,23 @@ export const api = {
     extract: (visitId) => request(`/ai/extract/${visitId}`, { method: 'POST' }),
     summarize: (visitId) => request(`/ai/summarize/${visitId}`, { method: 'POST' }),
 
+    // AI Diagnosis
+    diagnose: (visitId) => request(`/ai/diagnose/${visitId}`, { method: 'POST' }),
+
+    // SOAP Summaries
+    generateSOAP: (visitId) => request(`/ai/soap/${visitId}`, { method: 'POST' }),
+    updateDoctorSOAP: (visitId, doctorSoap) => request(`/ai/soap/${visitId}`, { method: 'PUT', body: JSON.stringify({ doctorSoap }) }),
+
+    // Medical Reports
+    uploadReport: (visitId, formData) => request(`/reports/upload/${visitId}`, { method: 'POST', body: formData, headers: {} }),
+    getVisitReports: (visitId) => request(`/reports/visit/${visitId}`),
+    getReport: (reportId) => request(`/reports/${reportId}`),
+    deleteReport: (reportId) => request(`/reports/${reportId}`, { method: 'DELETE' }),
+
+    // Doctor Feedback
+    submitFeedback: (visitId, feedback) => request('/ai-feedback', { method: 'POST', body: JSON.stringify({ visitId, feedback }) }),
+    getFeedback: (visitId) => request(`/ai-feedback/${visitId}`),
+
     // PDF
     getPdfUrl: (visitId) => `${API_BASE}/pdf/${visitId}`,
 };

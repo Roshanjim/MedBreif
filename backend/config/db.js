@@ -49,6 +49,56 @@ async function getDb() {
     )
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS medical_reports (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      visit_id INTEGER REFERENCES visits(id) ON DELETE CASCADE,
+      doctor_id INTEGER REFERENCES users(id),
+      report_type TEXT DEFAULT 'Lab Report',
+      original_filename TEXT,
+      file_path TEXT,
+      mime_type TEXT,
+      raw_text TEXT,
+      parsed_data TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS ai_analysis (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      visit_id INTEGER UNIQUE REFERENCES visits(id) ON DELETE CASCADE,
+      possible_conditions TEXT,
+      suggested_tests TEXT,
+      treatment_considerations TEXT,
+      risk_flags TEXT,
+      context_used TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS doctor_feedback (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      visit_id INTEGER REFERENCES visits(id) ON DELETE CASCADE,
+      doctor_id INTEGER REFERENCES users(id),
+      feedback TEXT CHECK(feedback IN ('good','okay','bad')),
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS soap_summaries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      visit_id INTEGER UNIQUE REFERENCES visits(id) ON DELETE CASCADE,
+      ai_soap TEXT,
+      doctor_soap TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   saveDb();
   return db;
 }

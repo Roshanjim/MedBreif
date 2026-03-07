@@ -7,6 +7,8 @@ const { authenticateToken } = require('../middleware/auth');
 const { transcribeAudio } = require('../services/transcription');
 const { extractMedicalData } = require('../services/extraction');
 const { generateDoctorSummary, generatePatientSummary } = require('../services/summaryFormatter');
+const { generateDiagnosis } = require('../services/aiDiagnosis');
+const { generateSOAP, updateDoctorSOAP } = require('../services/soapGenerator');
 
 const router = express.Router();
 
@@ -166,4 +168,72 @@ router.post('/summarize/:visitId', authenticateToken, async (req, res) => {
     } catch (err) { console.error('Summarize error:', err); res.status(500).json({ error: 'Summary generation failed' }); }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+//  AI DIAGNOSIS — Differential diagnosis with lab context
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post('/diagnose/:visitId', authenticateToken, async (req, res) => {
+    try {
+        const visitId = parseInt(req.params.visitId);
+        await getDb();
+
+        const visit = queryOne('SELECT id FROM visits WHERE id = ? AND doctor_id = ?', [visitId, req.user.id]);
+        if (!visit) return res.status(404).json({ error: 'Visit not found' });
+
+        console.log(`[AI] Generating diagnosis for visit ${visitId}...`);
+        const { analysis, method } = await generateDiagnosis(visitId);
+
+        res.json({
+            analysis,
+            method,
+            disclaimer: 'AI suggestions are for clinical decision support only. Final diagnosis must be made by the physician.'
+        });
+    } catch (err) {
+        console.error('[AI] Diagnosis error:', err);
+        res.status(500).json({ error: err.message || 'Diagnosis generation failed' });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  SOAP SUMMARIES — Generate and manage SOAP notes
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post('/soap/:visitId', authenticateToken, async (req, res) => {
+    try {
+        const visitId = parseInt(req.params.visitId);
+        await getDb();
+
+        const visit = queryOne('SELECT id FROM visits WHERE id = ? AND doctor_id = ?', [visitId, req.user.id]);
+        if (!visit) return res.status(404).json({ error: 'Visit not found' });
+
+        console.log(`[AI] Generating SOAP summary for visit ${visitId}...`);
+        const { aiSoap, doctorSoap } = await generateSOAP(visitId);
+
+        res.json({ aiSoap, doctorSoap });
+    } catch (err) {
+        console.error('[AI] SOAP error:', err);
+        res.status(500).json({ error: err.message || 'SOAP generation failed' });
+    }
+});
+
+router.put('/soap/:visitId', authenticateToken, async (req, res) => {
+    try {
+        const visitId = parseInt(req.params.visitId);
+        const { doctorSoap } = req.body;
+
+        if (!doctorSoap) return res.status(400).json({ error: 'doctorSoap is required' });
+
+        await getDb();
+        const visit = queryOne('SELECT id FROM visits WHERE id = ? AND doctor_id = ?', [visitId, req.user.id]);
+        if (!visit) return res.status(404).json({ error: 'Visit not found' });
+
+        const result = await updateDoctorSOAP(visitId, doctorSoap);
+        res.json(result);
+    } catch (err) {
+        console.error('[AI] SOAP update error:', err);
+        res.status(500).json({ error: err.message || 'SOAP update failed' });
+    }
+});
+
 module.exports = router;
+

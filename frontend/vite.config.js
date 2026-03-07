@@ -8,6 +8,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export default defineConfig({
     plugins: [react()],
     root: __dirname,
+    build: {
+        outDir: path.resolve(__dirname, '..', 'backend', 'public'),
+        emptyOutDir: true
+    },
     server: {
         port: 5173,
         host: true,
@@ -24,3 +28,4 @@ export default defineConfig({
         }
     }
 })
+

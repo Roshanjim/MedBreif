@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
+import LabResults from '../components/LabResults';
+import AIDiagnosisPanel from '../components/AIDiagnosisPanel';
+import SOAPSummary from '../components/SOAPSummary';
+import DoctorFeedback from '../components/DoctorFeedback';
 
 export default function AISummary() {
     const { id } = useParams();
@@ -79,6 +83,15 @@ export default function AISummary() {
                 </button>
                 <button className={`tab-btn ${tab === 'patient' ? 'active' : ''}`} onClick={() => setTab('patient')}>
                     🧑 Patient Summary
+                </button>
+                <button className={`tab-btn ${tab === 'lab' ? 'active' : ''}`} onClick={() => setTab('lab')}>
+                    🔬 Lab Results
+                </button>
+                <button className={`tab-btn ${tab === 'diagnosis' ? 'active' : ''}`} onClick={() => setTab('diagnosis')}>
+                    🩻 AI Diagnosis
+                </button>
+                <button className={`tab-btn ${tab === 'soap' ? 'active' : ''}`} onClick={() => setTab('soap')}>
+                    📋 SOAP Notes
                 </button>
             </div>
 
@@ -225,6 +238,31 @@ export default function AISummary() {
                     <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'var(--font-family)', fontSize: '0.9rem', lineHeight: 1.8, color: 'var(--text-secondary)' }}>
                         {visit?.patient_summary || 'No patient summary available'}
                     </pre>
+                </div>
+            )}
+
+            {tab === 'lab' && (
+                <div className="fade-in">
+                    <LabResults visitId={id} />
+                </div>
+            )}
+
+            {tab === 'diagnosis' && (
+                <div className="fade-in">
+                    <AIDiagnosisPanel visitId={id} />
+                </div>
+            )}
+
+            {tab === 'soap' && (
+                <div className="fade-in">
+                    <SOAPSummary visitId={id} />
+                </div>
+            )}
+
+            {/* Doctor Feedback at the bottom of every tab */}
+            {tab === 'structured' && (
+                <div style={{ marginTop: 24 }}>
+                    <DoctorFeedback visitId={id} />
                 </div>
             )}
         </div>

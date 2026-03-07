@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
+import UploadReport from '../components/UploadReport';
 
 export default function NewConsultation() {
     const [patientName, setPatientName] = useState('');
@@ -11,6 +12,8 @@ export default function NewConsultation() {
     const [processing, setProcessing] = useState(false);
     const [error, setError] = useState('');
     const [waveformBars, setWaveformBars] = useState(Array(40).fill(8));
+    const [createdVisitId, setCreatedVisitId] = useState(null);
+    const [showReportUpload, setShowReportUpload] = useState(false);
 
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
@@ -102,6 +105,8 @@ export default function NewConsultation() {
             const { visit } = await api.createVisit({
                 patient_name: patientName || 'Unknown Patient'
             });
+
+            setCreatedVisitId(visit.id);
 
             // 2. Upload audio (if available)
             const audioToUpload = audioBlob || uploadFile;
@@ -218,6 +223,34 @@ export default function NewConsultation() {
                         onChange={handleFileUpload}
                     />
                 </div>
+            </div>
+
+            {/* Medical Report Upload */}
+            <div className="card" style={{ marginTop: 24 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <div>
+                        <h2 style={{ marginBottom: 4 }}>📎 Medical Reports</h2>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                            Upload lab results, blood tests, scans (optional — can also upload later)
+                        </p>
+                    </div>
+                    <button
+                        className="btn btn-ghost"
+                        onClick={() => setShowReportUpload(!showReportUpload)}
+                        style={{ fontSize: '0.85rem' }}
+                    >
+                        {showReportUpload ? '▲ Hide' : '▼ Show Upload'}
+                    </button>
+                </div>
+                {showReportUpload && (
+                    createdVisitId ? (
+                        <UploadReport visitId={createdVisitId} />
+                    ) : (
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: 16 }}>
+                            Reports will be available after starting the AI pipeline (visit is created automatically).
+                        </p>
+                    )
+                )}
             </div>
 
             {hasAudio && (
