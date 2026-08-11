@@ -25,7 +25,7 @@ const PROMPT_TEMPLATE_PATH = path.join(__dirname, '..', 'prompts', 'extractMedic
 
 // ─── Main Entry Point ───────────────────────────────────────────────────────────
 
-async function extractMedicalData(transcript) {
+async function extractMedicalData(transcript, lang = 'en') {
     const startTime = Date.now();
     let extractedData;
     let method = 'regex-parser';
@@ -33,8 +33,8 @@ async function extractMedicalData(transcript) {
     // Tier 1: Try Gemini Flash (fastest, most accurate)
     if (GEMINI_API_KEY) {
         try {
-            console.log('[Extraction] Using Gemini Flash API...');
-            extractedData = await extractWithGemini(transcript);
+            console.log(`[Extraction] Using Gemini Flash API for language ${lang}...`);
+            extractedData = await extractWithGemini(transcript, lang);
             method = `gemini (${GEMINI_MODEL})`;
         } catch (err) {
             console.warn('[Extraction] Gemini failed:', err.message, '— trying next method.');
@@ -497,8 +497,11 @@ const GEMINI_JSON_SCHEMA = {
     required: ["PatientName", "Symptoms", "Diagnosis", "Prescriptions", "TestsAdvised", "FollowUp", "ConfidenceScore"]
 };
 
-async function extractWithGemini(transcript) {
+async function extractWithGemini(transcript, lang) {
     const prompt = `You are a medical data extraction assistant. You are given a TRANSCRIPT of a doctor-patient conversation.
+    
+Output the final JSON values in the language corresponding to this ISO language code: ${lang}. 
+However, you MUST keep complex medical terminology, medicine names, test names, and diseases in English. Translate only conversational text, instructions, advice, and symptoms descriptions to ${lang}.
 
 IMPORTANT INSTRUCTIONS:
 1. Extract ONLY information explicitly mentioned in the transcript. Do NOT hallucinate or add information not discussed.

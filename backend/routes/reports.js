@@ -34,11 +34,19 @@ const upload = multer({
     storage,
     limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB
     fileFilter: (req, file, cb) => {
-        const allowed = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+        const allowed = [
+            'application/pdf', 
+            'image/png', 
+            'image/jpeg', 
+            'image/jpg', 
+            'image/webp',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ];
         if (allowed.includes(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new Error('Only PDF and image files (PNG, JPG, WEBP) are supported.'));
+            cb(new Error('Only PDF, Word Docs (DOC/DOCX), and image files are supported.'));
         }
     }
 });
@@ -120,7 +128,16 @@ router.post('/upload/patient/:patientId', authenticateToken, upload.single('repo
         const patientId = parseInt(req.params.patientId);
         await getDb();
 
-        const patient = await queryOne('SELECT id FROM patients WHERE id = ? AND doctor_id = ?', [patientId, req.user.id]);
+        let patient;
+        let doctorIdToInsert = null;
+        if (req.user.role === 'patient') {
+            if (patientId !== req.user.id) return res.status(403).json({ error: 'Access denied' });
+            patient = await queryOne('SELECT id, doctor_id FROM patients WHERE id = ?', [patientId]);
+            if (patient) doctorIdToInsert = patient.doctor_id;
+        } else {
+            patient = await queryOne('SELECT id, doctor_id FROM patients WHERE id = ? AND (doctor_id = ? OR doctor_id IS NULL)', [patientId, req.user.id]);
+            doctorIdToInsert = req.user.id;
+        }
         if (!patient) {
             fs.unlinkSync(req.file.path);
             return res.status(404).json({ error: 'Patient not found' });
@@ -131,7 +148,7 @@ router.post('/upload/patient/:patientId', authenticateToken, upload.single('repo
 
         const { lastId } = await runSql(
             `INSERT INTO medical_reports (patient_id, doctor_id, report_type, original_filename, file_path, mime_type, raw_text, parsed_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [patientId, req.user.id, parsed.reportType || 'Lab Report', req.file.originalname, req.file.path, req.file.mimetype, rawText, JSON.stringify(parsed)]
+            [patientId, doctorIdToInsert, parsed.reportType || 'Lab Report', req.file.originalname, req.file.path, req.file.mimetype, rawText, JSON.stringify(parsed)]
         );
 
         res.status(201).json({
@@ -178,8 +195,20 @@ router.get('/visit/:visitId', authenticateToken, async (req, res) => {
     }
 });
 
+// Helper to check report authorization
+async function fetchAuthorizedReport(reportId, user) {
+    const report = await queryOne('SELECT * FROM medical_reports WHERE id = ?', [reportId]);
+    if (!report) return null;
+    if (user.role === 'patient') {
+        if (report.patient_id === user.id) return report;
+        return null;
+    }
+    // Doctors can access if they uploaded it, or if it's assigned to a patient
+    return report;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
-//  GET /api/reports/:reportId — Get single report
+//  GET /api/reports/:reportId — Get single report details (JSON)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.get('/:reportId', authenticateToken, async (req, res) => {
@@ -187,13 +216,14 @@ router.get('/:reportId', authenticateToken, async (req, res) => {
         const reportId = parseInt(req.params.reportId);
         await getDb();
 
-        const report = await queryOne('SELECT * FROM medical_reports WHERE id = ? AND doctor_id = ?', [reportId, req.user.id]);
-        if (!report) return res.status(404).json({ error: 'Report not found' });
+        const report = await fetchAuthorizedReport(reportId, req.user);
+        if (!report) return res.status(404).json({ error: 'Report not found or access denied' });
 
         res.json({
             report: {
                 id: report.id,
                 visitId: report.visit_id,
+                patientId: report.patient_id,
                 reportType: report.report_type,
                 filename: report.original_filename,
                 rawText: report.raw_text,
@@ -208,6 +238,28 @@ router.get('/:reportId', authenticateToken, async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
+//  GET /api/reports/:reportId/file — View/Download actual report file
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/:reportId/file', authenticateToken, async (req, res) => {
+    try {
+        const reportId = parseInt(req.params.reportId);
+        await getDb();
+
+        const report = await fetchAuthorizedReport(reportId, req.user);
+        if (!report || !report.file_path || !fs.existsSync(report.file_path)) {
+            return res.status(404).json({ error: 'File not found' });
+        }
+
+        res.contentType(report.mime_type || 'application/octet-stream');
+        res.sendFile(path.resolve(report.file_path));
+    } catch (err) {
+        console.error('[Reports] File fetch error:', err);
+        res.status(500).json({ error: 'Failed to fetch file' });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
 //  DELETE /api/reports/:reportId — Delete a report
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -216,8 +268,8 @@ router.delete('/:reportId', authenticateToken, async (req, res) => {
         const reportId = parseInt(req.params.reportId);
         await getDb();
 
-        const report = await queryOne('SELECT * FROM medical_reports WHERE id = ? AND doctor_id = ?', [reportId, req.user.id]);
-        if (!report) return res.status(404).json({ error: 'Report not found' });
+        const report = await fetchAuthorizedReport(reportId, req.user);
+        if (!report) return res.status(404).json({ error: 'Report not found or access denied' });
 
         // Delete file from disk
         if (report.file_path && fs.existsSync(report.file_path)) {

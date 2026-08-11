@@ -181,7 +181,6 @@ export default function NewConsultation() {
                                 <option key={p.id} value={p.id}>{p.name} ({p.patient_uid})</option>
                             ))}
                         </select>
-                        <button className="btn btn-ghost" onClick={() => navigate('/patients/new')}>+ New</button>
                     </div>
                     {!selectedPatientId && (
                         <div style={{ marginTop: 12 }}>

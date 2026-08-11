@@ -28,6 +28,8 @@ async function parseReport(filePath, mimeType) {
             console.log('[LabParser] PDF text too short, attempting OCR...');
             rawText = await extractTextFromImage(filePath);
         }
+    } else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || mimeType === 'application/msword') {
+        rawText = await extractTextFromDOCX(filePath);
     } else if (mimeType.startsWith('image/')) {
         rawText = await extractTextFromImage(filePath);
     } else {
@@ -67,6 +69,17 @@ async function extractTextFromImage(filePath) {
         return data.text || '';
     } catch (err) {
         console.error('[LabParser] OCR failed:', err.message);
+        return '';
+    }
+}
+
+async function extractTextFromDOCX(filePath) {
+    try {
+        const mammoth = require('mammoth');
+        const result = await mammoth.extractRawText({ path: filePath });
+        return result.value || '';
+    } catch (err) {
+        console.error('[LabParser] DOCX parse failed:', err.message);
         return '';
     }
 }

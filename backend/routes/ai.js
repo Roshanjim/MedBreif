@@ -123,7 +123,8 @@ router.post('/transcribe/:visitId', authenticateToken, async (req, res) => {
         const visit = await queryOne('SELECT * FROM visits WHERE id = ? AND doctor_id = ?', [parseInt(req.params.visitId), req.user.id]);
         if (!visit) return res.status(404).json({ error: 'Visit not found' });
 
-        const { transcript, decisionLog } = await transcribeAudio(visit.audio_path);
+        const lang = req.headers['accept-language'] || 'en';
+        const { transcript, decisionLog } = await transcribeAudio(visit.audio_path, lang);
         const existingLog = visit.ai_decision_log ? JSON.parse(visit.ai_decision_log) : {};
         existingLog.transcription = decisionLog;
 
@@ -141,7 +142,8 @@ router.post('/extract/:visitId', authenticateToken, async (req, res) => {
         const transcript = visit.transcript ? JSON.parse(visit.transcript) : null;
         if (!transcript) return res.status(400).json({ error: 'No transcript. Transcribe first.' });
 
-        const { extractedData, decisionLog } = await extractMedicalData(transcript.text);
+        const lang = req.headers['accept-language'] || 'en';
+        const { extractedData, decisionLog } = await extractMedicalData(transcript.text, lang);
         const existingLog = visit.ai_decision_log ? JSON.parse(visit.ai_decision_log) : {};
         existingLog.extraction = decisionLog;
 
@@ -180,8 +182,9 @@ router.post('/diagnose/:visitId', authenticateToken, async (req, res) => {
         const visit = await queryOne('SELECT id FROM visits WHERE id = ? AND doctor_id = ?', [visitId, req.user.id]);
         if (!visit) return res.status(404).json({ error: 'Visit not found' });
 
-        console.log(`[AI] Generating diagnosis for visit ${visitId}...`);
-        const { analysis, method } = await generateDiagnosis(visitId);
+        const lang = req.headers['accept-language'] || 'en';
+        console.log(`[AI] Generating diagnosis for visit ${visitId} in language ${lang}...`);
+        const { analysis, method } = await generateDiagnosis(visitId, lang);
 
         res.json({
             analysis,
@@ -206,8 +209,9 @@ router.post('/soap/:visitId', authenticateToken, async (req, res) => {
         const visit = await queryOne('SELECT id FROM visits WHERE id = ? AND doctor_id = ?', [visitId, req.user.id]);
         if (!visit) return res.status(404).json({ error: 'Visit not found' });
 
-        console.log(`[AI] Generating SOAP summary for visit ${visitId}...`);
-        const { aiSoap, doctorSoap } = await generateSOAP(visitId);
+        const lang = req.headers['accept-language'] || 'en';
+        console.log(`[AI] Generating SOAP summary for visit ${visitId} in language ${lang}...`);
+        const { aiSoap, doctorSoap } = await generateSOAP(visitId, lang);
 
         res.json({ aiSoap, doctorSoap });
     } catch (err) {

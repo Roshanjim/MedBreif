@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
+import { useTranslation } from 'react-i18next';
 
 export default function Dashboard() {
     const [visits, setVisits] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     useEffect(() => {
         api.getVisits()
@@ -52,11 +54,11 @@ export default function Dashboard() {
         <div>
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Dashboard</h1>
-                    <p className="page-subtitle">Manage your consultation summaries</p>
+                    <h1 className="page-title">{t('dashboard.title', 'Dashboard')}</h1>
+                    <p className="page-subtitle">{t('dashboard.subtitle', 'Manage your consultation summaries')}</p>
                 </div>
                 <button className="btn btn-primary" onClick={() => navigate('/new')}>
-                    ➕ New Consultation
+                    ➕ {t('dashboard.newConsultation', 'New Consultation')}
                 </button>
             </div>
 
@@ -91,15 +93,15 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            <h2 style={{ marginBottom: 16 }}>Recent Consultations</h2>
+            <h2 style={{ marginBottom: 16 }}>{t('dashboard.recentConsultations', 'Recent Consultations')}</h2>
 
             {visits.length === 0 ? (
                 <div className="empty-state card">
                     <div className="empty-state-icon">🩺</div>
-                    <h3>No consultations yet</h3>
-                    <p style={{ marginBottom: 20 }}>Start your first AI-powered consultation recording</p>
+                    <h3>{t('dashboard.noConsultations', 'No consultations yet')}</h3>
+                    <p style={{ marginBottom: 20 }}>{t('dashboard.startFirst', 'Start your first AI-powered consultation recording')}</p>
                     <button className="btn btn-primary" onClick={() => navigate('/new')}>
-                        🎙️ Start Recording
+                        🎙️ {t('dashboard.startRecording', 'Start Recording')}
                     </button>
                 </div>
             ) : (

@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, API_BASE } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import UploadReport from '../components/UploadReport';
 
 export default function PatientDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [patient, setPatient] = useState(null);
     const [visits, setVisits] = useState([]);
     const [reports, setReports] = useState([]);
@@ -100,9 +102,11 @@ export default function PatientDetails() {
                         </div>
                     </div>
                 </div>
-                <button className="btn btn-primary" onClick={() => navigate('/new', { state: { patientId: patient.id, patientName: patient.name } })}>
-                    + New Consultation
-                </button>
+                {user?.role !== 'patient' && (
+                    <button className="btn btn-primary" onClick={() => navigate('/new', { state: { patientId: patient.id, patientName: patient.name } })}>
+                        + New Consultation
+                    </button>
+                )}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, alignItems: 'start' }}>
@@ -175,7 +179,7 @@ export default function PatientDetails() {
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', gap: 8 }}>
-                                            <a href={`${API_BASE}/reports/${r.id}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">View</a>
+                                            <a href={`${API_BASE}/reports/${r.id}/file?token=${localStorage.getItem('medbrief_token')}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">View</a>
                                             <button className="btn btn-ghost btn-sm" style={{ color: 'var(--accent-danger)' }} onClick={() => deleteReport(r.id)}>🗑️</button>
                                         </div>
                                     </div>
@@ -192,7 +196,7 @@ export default function PatientDetails() {
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                 {visits.map(v => (
-                                    <div key={v.id} className="visit-card" onClick={() => navigate(`/visit/${v.id}/summary`)} style={{ cursor: 'pointer', margin: 0 }}>
+                                    <div key={v.id} className="visit-card" onClick={() => navigate(user?.role === 'patient' ? `/visit/${v.id}` : `/visit/${v.id}/summary`)} style={{ cursor: 'pointer', margin: 0 }}>
                                         <div className="visit-header">
                                             <div className="visit-date">{new Date(v.visit_date).toLocaleDateString()}</div>
                                             <span className={`status-badge status-${v.status}`}>

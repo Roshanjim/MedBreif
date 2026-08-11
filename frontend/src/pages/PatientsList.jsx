@@ -30,9 +30,6 @@ export default function PatientsList() {
                     <h1 className="page-title">Patients Directory</h1>
                     <p className="page-subtitle">Manage your registered patients</p>
                 </div>
-                <button className="btn btn-primary" onClick={() => navigate('/patients/new')}>
-                    + Register New Patient
-                </button>
             </div>
 
             <div className="card" style={{ marginBottom: 24 }}>
@@ -50,7 +47,7 @@ export default function PatientsList() {
                     <div className="empty-state">
                         <div className="empty-state-icon">👥</div>
                         <h3>No patients found</h3>
-                        <p>{search ? 'Try adjusting your search' : 'Register your first patient to get started.'}</p>
+                        <p>{search ? 'Try adjusting your search' : 'No patients have registered yet.'}</p>
                     </div>
                 ) : (
                     filteredPatients.map(patient => (

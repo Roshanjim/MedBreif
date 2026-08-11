@@ -7,7 +7,12 @@ const router = express.Router();
 router.get('/', authenticateToken, async (req, res) => {
     try {
         await getDb();
-        const visits = await queryAll('SELECT id, patient_id, patient_name, visit_date, status, confidence_score, created_at, updated_at FROM visits WHERE doctor_id = ? ORDER BY created_at DESC', [req.user.id]);
+        let visits;
+        if (req.user.role === 'patient') {
+            visits = await queryAll('SELECT id, doctor_id, patient_id, patient_name, visit_date, status, confidence_score, created_at, updated_at FROM visits WHERE patient_id = ? ORDER BY created_at DESC', [req.user.id]);
+        } else {
+            visits = await queryAll('SELECT id, doctor_id, patient_id, patient_name, visit_date, status, confidence_score, created_at, updated_at FROM visits WHERE doctor_id = ? ORDER BY created_at DESC', [req.user.id]);
+        }
         res.json({ visits });
     } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to fetch visits' }); }
 });
@@ -15,7 +20,13 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/:id', authenticateToken, async (req, res) => {
     try {
         await getDb();
-        const visit = await queryOne('SELECT * FROM visits WHERE id = ? AND doctor_id = ?', [parseInt(req.params.id), req.user.id]);
+        let visit;
+        if (req.user.role === 'patient') {
+            visit = await queryOne('SELECT * FROM visits WHERE id = ? AND patient_id = ?', [parseInt(req.params.id), req.user.id]);
+        } else {
+            visit = await queryOne('SELECT * FROM visits WHERE id = ? AND doctor_id = ?', [parseInt(req.params.id), req.user.id]);
+        }
+        
         if (!visit) return res.status(404).json({ error: 'Visit not found' });
         if (visit.extracted_data) visit.extracted_data = JSON.parse(visit.extracted_data);
         if (visit.ai_decision_log) visit.ai_decision_log = JSON.parse(visit.ai_decision_log);

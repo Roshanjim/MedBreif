@@ -9,8 +9,8 @@ import AISummary from './pages/AISummary';
 import EditReview from './pages/EditReview';
 import Settings from './pages/Settings';
 import PatientsList from './pages/PatientsList';
-import PatientRegistration from './pages/PatientRegistration';
 import PatientDetails from './pages/PatientDetails';
+import PatientVisitView from './pages/PatientVisitView';
 
 function ProtectedRoute({ children, allowedRoles }) {
     const { user, loading } = useAuth();
@@ -124,22 +124,22 @@ function AppRoutes() {
                     </div>
                 </ProtectedRoute>
             } />
-            <Route path="/patients/new" element={
-                <ProtectedRoute allowedRoles={['doctor', 'admin']}>
-                    <div className="app-layout">
-                        <Navbar />
-                        <main className="main-content fade-in">
-                            <PatientRegistration />
-                        </main>
-                    </div>
-                </ProtectedRoute>
-            } />
             <Route path="/patients/:id" element={
                 <ProtectedRoute>
                     <div className="app-layout">
                         <Navbar />
                         <main className="main-content fade-in">
                             <PatientDetails />
+                        </main>
+                    </div>
+                </ProtectedRoute>
+            } />
+            <Route path="/visit/:id" element={
+                <ProtectedRoute allowedRoles={['patient']}>
+                    <div className="app-layout">
+                        <Navbar />
+                        <main className="main-content fade-in">
+                            <PatientVisitView />
                         </main>
                     </div>
                 </ProtectedRoute>

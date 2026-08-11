@@ -1,0 +1,19 @@
+{
+    "nav": {
+        "myRecords": "My Records",
+        "dashboard": "Dashboard",
+        "newConsultation": "New Consultation",
+        "patients": "Patients",
+        "settings": "Settings",
+        "logout": "Logout"
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "subtitle": "Manage your consultation summaries",
+        "newConsultation": "New Consultation",
+        "recentConsultations": "Recent Consultations",
+        "noConsultations": "No consultations yet",
+        "startFirst": "Start your first AI-powered consultation recording",
+        "startRecording": "Start Recording"
+    }
+}

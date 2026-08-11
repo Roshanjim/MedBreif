@@ -15,7 +15,7 @@ import os
 import time
 
 
-def transcribe(audio_path):
+def transcribe(audio_path, target_lang="en"):
     """
     Transcribe and translate an audio file to English text using faster-whisper.
 
@@ -45,10 +45,15 @@ def transcribe(audio_path):
         cpu_threads=os.cpu_count() or 4,
     )
 
-    # Transcribe with translate task — converts all languages to English
+    # If target is English, translate all to English. If target is the same as the spoken language,
+    # we would ideally just "transcribe". Since we don't know the spoken language perfectly, 
+    # if target_lang is 'ml', we'll use task="transcribe" so it outputs the original language (e.g. Malayalam).
+    task_mode = "translate" if target_lang == "en" else "transcribe"
+    
+    # Transcribe
     segments, info = model.transcribe(
         audio_path,
-        task="translate",
+        task=task_mode,
         beam_size=3,          # lower beam size for faster CPU inference
         best_of=1,            # single candidate for speed
         vad_filter=True,      # skip silent sections
@@ -142,7 +147,12 @@ def main():
             sys.exit(1)
         result = detect_language(sys.argv[2])
     else:
-        result = transcribe(arg)
+        target_lang = "en"
+        # Check if --lang is provided
+        if len(sys.argv) > 2 and sys.argv[2] == "--lang" and len(sys.argv) > 3:
+            target_lang = sys.argv[3]
+            
+        result = transcribe(arg, target_lang)
 
     # Output JSON to stdout (Node.js will read this)
     print(json.dumps(result, ensure_ascii=False))

@@ -2,11 +2,13 @@ export const API_BASE = '/api';
 
 async function request(endpoint, options = {}) {
     const token = localStorage.getItem('medbrief_token');
+    const lang = localStorage.getItem('i18nextLng') || 'en';
 
     const config = {
         ...options,
         headers: {
             'Content-Type': 'application/json',
+            'Accept-Language': lang,
             ...(token && { Authorization: `Bearer ${token}` }),
             ...(options.headers || {}),
         },

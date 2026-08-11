@@ -11,9 +11,16 @@ export default function UploadReport({ visitId, patientId, onUploadComplete }) {
     const handleFile = async (file) => {
         if (!file) return;
 
-        const allowed = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
+        const allowed = [
+            'application/pdf', 
+            'image/png', 
+            'image/jpeg', 
+            'image/webp',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ];
         if (!allowed.includes(file.type)) {
-            setError('Only PDF and image files (PNG, JPG, WEBP) are supported.');
+            setError('Only PDF, Word Docs (DOC/DOCX), and image files are supported.');
             return;
         }
 
@@ -74,12 +81,12 @@ export default function UploadReport({ visitId, patientId, onUploadComplete }) {
                     {uploading ? 'Parsing report...' : 'Drag & drop or click to upload'}
                 </p>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4 }}>
-                    PDF, PNG, JPG, WEBP — max 20 MB
+                    PDF, DOC, DOCX, PNG, JPG, WEBP — max 20 MB
                 </p>
                 <input
                     ref={fileInputRef}
                     type="file"
-                    accept=".pdf,image/png,image/jpeg,image/webp"
+                    accept=".pdf,.doc,.docx,image/png,image/jpeg,image/webp"
                     style={{ display: 'none' }}
                     onChange={(e) => handleFile(e.target.files[0])}
                 />

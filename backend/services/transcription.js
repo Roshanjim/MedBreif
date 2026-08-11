@@ -29,7 +29,7 @@ const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
  * @param {string} audioFilenameOrPath - filename in uploads/ or absolute path
  * @returns {Promise<{transcript: object, decisionLog: object}>}
  */
-async function transcribeAudio(audioFilenameOrPath) {
+async function transcribeAudio(audioFilenameOrPath, lang = 'en') {
     const startTime = Date.now();
 
     // Resolve the audio path
@@ -53,16 +53,16 @@ async function transcribeAudio(audioFilenameOrPath) {
             result = await runMedASR(audioPath);
         } else if (engine === 'hybrid') {
             // Auto-detect language, route accordingly
-            result = await runHybridPipeline(audioPath);
+            result = await runHybridPipeline(audioPath, lang);
             correctionApplied = result._corrected || false;
             engine = result._engine || 'hybrid';
         } else {
             // Default: Whisper translate + Gemini correction
-            result = await runWhisperTranslate(audioPath);
+            result = await runWhisperTranslate(audioPath, lang);
             // Apply Gemini medical correction
             if (result.full_text && GEMINI_API_KEY) {
                 try {
-                    const corrected = await correctMedicalTerms(result.full_text);
+                    const corrected = await correctMedicalTerms(result.full_text, lang);
                     if (corrected && corrected.length > 10) {
                         result._originalText = result.full_text;
                         result.full_text = corrected;
@@ -133,12 +133,12 @@ async function runHybridPipeline(audioPath) {
 
     // Non-English or MedASR failed → Whisper translate + Gemini correction
     console.log(`[Transcription] ${detectedLang !== 'en' ? detectedLang + ' detected → ' : ''}using Whisper translate + Gemini correction`);
-    const result = await runWhisperTranslate(audioPath);
+    const result = await runWhisperTranslate(audioPath, lang);
 
     // Apply Gemini medical correction
     if (result.full_text && GEMINI_API_KEY) {
         try {
-            const corrected = await correctMedicalTerms(result.full_text);
+            const corrected = await correctMedicalTerms(result.full_text, lang);
             if (corrected && corrected.length > 10) {
                 result._originalText = result.full_text;
                 result.full_text = corrected;
@@ -155,11 +155,11 @@ async function runHybridPipeline(audioPath) {
 
 // ─── ASR Engines ─────────────────────────────────────────────────────────────
 
-async function runWhisperTranslate(audioPath) {
+async function runWhisperTranslate(audioPath, lang) {
     if (!fs.existsSync(WHISPER_SCRIPT)) {
         throw new Error(`Whisper transcriber not found at: ${WHISPER_SCRIPT}. Run setup first.`);
     }
-    return runPythonScript(WHISPER_SCRIPT, [audioPath], 600000);
+    return runPythonScript(WHISPER_SCRIPT, [audioPath, '--lang', lang || 'en'], 600000);
 }
 
 async function runMedASR(audioPath) {
@@ -171,7 +171,7 @@ async function runMedASR(audioPath) {
 
 // ─── Gemini Medical Term Correction ──────────────────────────────────────────
 
-async function correctMedicalTerms(rawText) {
+async function correctMedicalTerms(rawText, lang = 'en') {
     if (!GEMINI_API_KEY || !rawText || rawText.length < 10) return rawText;
 
     let promptTemplate = '';
@@ -180,6 +180,8 @@ async function correctMedicalTerms(rawText) {
     } catch {
         promptTemplate = 'You are a medical transcription corrector. Fix ONLY medical terminology errors in the following text. Return only the corrected text with no explanations.';
     }
+    
+    promptTemplate += `\n\nEnsure the final output is in language: ${lang}.`;
 
     const prompt = `${promptTemplate}\n\nTRANSCRIPT TO CORRECT:\n${rawText}`;
 
