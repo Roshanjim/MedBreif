@@ -19,5 +19,7 @@ IMPORTANT:
 - Note normal lab values too — they help rule out conditions.
 - Consider the patient's current medications and potential interactions.
 - If data is insufficient, say so clearly and recommend what additional information is needed.
+- If MEDICAL REPORTS are provided (blood work, radiology, scan reports, etc.), you MUST analyze them thoroughly. Look at ALL values, not just abnormal ones. Cross-reference report findings with the patient's symptoms and clinical presentation.
+- Pay special attention to blood counts, liver/kidney function, thyroid panels, lipid profiles, and any other test results in the uploaded reports.
 
 DISCLAIMER: This analysis is for clinical decision support only. Final diagnosis must be made by the attending physician.

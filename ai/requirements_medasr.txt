@@ -1,0 +1,12 @@
+# MedASR dependencies
+# Install with: pip install -r requirements_medasr.txt
+
+# HuggingFace Transformers (v5.0.0+ needed for MedASR Conformer support)
+transformers @ git+https://github.com/huggingface/transformers.git@65dc261512cbdb1ee72b88ae5b222f2605aad8e5
+
+# PyTorch CPU-only (smaller download, ~200MB instead of 2GB)
+torch --index-url https://download.pytorch.org/whl/cpu
+
+# Audio processing
+librosa
+soundfile

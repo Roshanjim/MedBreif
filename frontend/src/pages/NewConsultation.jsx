@@ -214,11 +214,11 @@ export default function NewConsultation() {
                 <div className="upload-area" style={{ marginTop: 16 }} onClick={() => document.getElementById('audio-upload').click()}>
                     <div className="upload-icon">📁</div>
                     <p style={{ fontWeight: 500 }}>{uploadFile ? `📎 ${uploadFile.name}` : 'Click to upload audio file'}</p>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4 }}>Supports MP3, WAV, M4A, WEBM</p>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4 }}>Supports MP3, WAV, M4A, MP4, WEBM</p>
                     <input
                         id="audio-upload"
                         type="file"
-                        accept="audio/*"
+                        accept="audio/*,.mp4,video/mp4"
                         style={{ display: 'none' }}
                         onChange={handleFileUpload}
                     />

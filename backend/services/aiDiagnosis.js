@@ -61,11 +61,17 @@ async function generateDiagnosis(visitId) {
     const extractedData = visit.extracted_data ? JSON.parse(visit.extracted_data) : null;
     const transcript = visit.transcript ? (typeof visit.transcript === 'string' ? JSON.parse(visit.transcript) : visit.transcript) : null;
 
-    // Get lab reports for this visit
-    const reports = queryAll('SELECT parsed_data FROM medical_reports WHERE visit_id = ?', [visitId]);
+    // Get lab reports for this visit (both parsed data AND raw text)
+    const reports = queryAll('SELECT parsed_data, raw_text, report_type, original_filename FROM medical_reports WHERE visit_id = ?', [visitId]);
     const labResults = reports
         .map(r => { try { return JSON.parse(r.parsed_data); } catch { return null; } })
         .filter(Boolean);
+
+    // Collect raw report text for Gemini (full context including comments, headers, etc.)
+    const rawReportTexts = reports
+        .filter(r => r.raw_text && r.raw_text.trim().length > 10)
+        .map(r => `--- ${r.report_type || 'Report'}: ${r.original_filename || 'Unknown'} ---\n${r.raw_text.substring(0, 3000)}`)
+        .join('\n\n');
 
     // Build context object
     const context = {
@@ -77,6 +83,7 @@ async function generateDiagnosis(visitId) {
         testsAdvised: extractedData?.TestsAdvised || [],
         labResults: labResults.flatMap(lr => lr.testResults || []),
         redFlags: extractedData?.RedFlags || [],
+        rawReportText: rawReportTexts,
     };
 
     let analysis;
@@ -136,7 +143,11 @@ async function diagnosisWithGemini(context) {
 
     const labSummary = context.labResults.length > 0
         ? context.labResults.map(r => `${r.testName}: ${r.value} ${r.unit || ''} (Ref: ${r.referenceRange || 'N/A'}, Status: ${r.flag || 'unknown'})`).join('\n')
-        : 'No lab results available.';
+        : 'No structured lab values extracted.';
+
+    const rawReportSection = context.rawReportText
+        ? `\nMEDICAL REPORTS (raw text from uploaded PDF/images):\n${context.rawReportText}`
+        : '';
 
     const prompt = `${promptTemplate}
 
@@ -148,13 +159,14 @@ PATIENT DATA:
 - Tests Already Advised: ${context.testsAdvised.join(', ') || 'None'}
 - Red Flags: ${context.redFlags.join(', ') || 'None'}
 
-LAB RESULTS:
+PARSED LAB VALUES:
 ${labSummary}
+${rawReportSection}
 
 TRANSCRIPT EXCERPT (first 1000 chars):
 ${(context.transcript || '').substring(0, 1000)}
 
-Analyze all the above data. Provide your assessment.`;
+Analyze ALL the above data including any uploaded medical reports and lab results. Provide your assessment.`;
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
