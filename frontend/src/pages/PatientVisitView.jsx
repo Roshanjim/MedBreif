@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useTranslation } from 'react-i18next';
+import { IconDownload, IconCheck, IconStethoscope, IconHospital } from '../components/Icons';
 
 export default function PatientVisitView() {
     const { id } = useParams();
@@ -62,7 +63,7 @@ export default function PatientVisitView() {
                                 URL.revokeObjectURL(url);
                             }).catch(err => alert('PDF download failed: ' + err.message));
                         }}>
-                            📄 {t('downloadPdf', 'Download PDF')}
+                            <IconDownload size={16} /> {t('downloadPdf', 'Download PDF')}
                         </button>
                     )}
                 </div>
@@ -83,13 +84,13 @@ export default function PatientVisitView() {
             )}
 
             <div className="card" style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
-                <div className="user-avatar" style={{ width: 48, height: 48, fontSize: '1.2rem', background: 'var(--primary-color)' }}>
-                    👨‍⚕️
+                <div className="user-avatar" style={{ width: 44, height: 44, fontSize: '1rem', background: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyCenter: 'center' }}>
+                    <IconStethoscope size={22} />
                 </div>
                 <div>
-                    <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{visit.doctor_name || 'Attending Physician'}</h3>
-                    <p style={{ margin: '2px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                        🏥 {visit.hospital_name || 'Medical Center / Clinic'}
+                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600 }}>{visit.doctor_name || 'Attending Physician'}</h3>
+                    <p style={{ margin: '2px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <IconHospital size={14} /> {visit.hospital_name || 'Medical Center / Clinic'}
                     </p>
                 </div>
             </div>
@@ -97,7 +98,7 @@ export default function PatientVisitView() {
             <div className="two-col" style={{ marginTop: 24 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                     <div className="card">
-                        <h3 style={{ marginBottom: 16 }}>🧑 {t('patientSummary', 'Patient Summary')}</h3>
+                        <h3 style={{ marginBottom: 16 }}>{t('patientSummary', 'Patient Summary')}</h3>
                         {visit.patient_summary ? (
                             <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'var(--font-family)', fontSize: '0.95rem', lineHeight: 1.8, color: 'var(--text-primary)' }}>
                                 {visit.patient_summary}
@@ -108,7 +109,7 @@ export default function PatientVisitView() {
                     </div>
 
                     <div className="card">
-                        <h3 style={{ marginBottom: 16 }}>🩺 {t('doctorNotes', 'Doctor\'s Notes')}</h3>
+                        <h3 style={{ marginBottom: 16 }}>{t('doctorNotes', 'Doctor\'s Notes')}</h3>
                         {visit.doctor_summary ? (
                             <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'var(--font-family)', fontSize: '0.95rem', lineHeight: 1.8, color: 'var(--text-primary)' }}>
                                 {visit.doctor_summary}
@@ -122,7 +123,7 @@ export default function PatientVisitView() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                     {data && data.Prescriptions && data.Prescriptions.length > 0 && (
                         <div className="card">
-                            <h3 style={{ marginBottom: 16 }}>💊 {t('prescriptions', 'Prescriptions')}</h3>
+                            <h3 style={{ marginBottom: 16 }}>{t('prescriptions', 'Prescriptions')}</h3>
                             <table className="medicine-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
                                 <thead>
                                     <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
@@ -146,7 +147,7 @@ export default function PatientVisitView() {
                     
                     {data && data.LifestyleAdvice && data.LifestyleAdvice.length > 0 && (
                         <div className="card">
-                            <h3 style={{ marginBottom: 16 }}>🏃 {t('lifestyleAdvice', 'Lifestyle Advice')}</h3>
+                            <h3 style={{ marginBottom: 16 }}>{t('lifestyleAdvice', 'Lifestyle Advice')}</h3>
                             <ul style={{ paddingLeft: 20, margin: 0, lineHeight: 1.8 }}>
                                 {data.LifestyleAdvice.map((advice, i) => (
                                     <li key={i}>{advice}</li>
@@ -157,7 +158,7 @@ export default function PatientVisitView() {
                     
                     {data && data.TestsAdvised && data.TestsAdvised.length > 0 && (
                         <div className="card">
-                            <h3 style={{ marginBottom: 16 }}>🧪 {t('testsAdvised', 'Tests Advised')}</h3>
+                            <h3 style={{ marginBottom: 16 }}>{t('testsAdvised', 'Tests Advised')}</h3>
                             <ul style={{ paddingLeft: 20, margin: 0, lineHeight: 1.8 }}>
                                 {data.TestsAdvised.map((test, i) => (
                                     <li key={i}>{test}</li>

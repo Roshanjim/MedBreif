@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { IconDashboard, IconNewConsultation, IconPatients, IconSettings, IconFileText, IconLogout } from './Icons';
 
 export default function Navbar() {
     const { user, logout } = useAuth();
@@ -39,25 +40,25 @@ export default function Navbar() {
                     {user?.role === 'patient' ? (
                         <NavLink to={`/patients/${user.id}`} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                             onClick={() => setSidebarOpen(false)}>
-                            <span className="nav-icon">📂</span> {t('nav.myRecords', 'My Records')}
+                            <span className="nav-icon"><IconFileText size={18} /></span> {t('nav.myRecords', 'My Records')}
                         </NavLink>
                     ) : (
                         <>
                             <NavLink to="/" end className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                                 onClick={() => setSidebarOpen(false)}>
-                                <span className="nav-icon">📊</span> {t('nav.dashboard', 'Dashboard')}
+                                <span className="nav-icon"><IconDashboard size={18} /></span> {t('nav.dashboard', 'Dashboard')}
                             </NavLink>
                             <NavLink to="/new" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                                 onClick={() => setSidebarOpen(false)}>
-                                <span className="nav-icon">🎙️</span> {t('nav.newConsultation', 'New Consultation')}
+                                <span className="nav-icon"><IconNewConsultation size={18} /></span> {t('nav.newConsultation', 'New Consultation')}
                             </NavLink>
                             <NavLink to="/patients" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                                 onClick={() => setSidebarOpen(false)}>
-                                <span className="nav-icon">👥</span> {t('nav.patients', 'Patients')}
+                                <span className="nav-icon"><IconPatients size={18} /></span> {t('nav.patients', 'Patients')}
                             </NavLink>
                             <NavLink to="/settings" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                                 onClick={() => setSidebarOpen(false)}>
-                                <span className="nav-icon">⚙️</span> {t('nav.settings', 'Settings')}
+                                <span className="nav-icon"><IconSettings size={18} /></span> {t('nav.settings', 'Settings')}
                             </NavLink>
                         </>
                     )}
@@ -74,7 +75,7 @@ export default function Navbar() {
                             <div className="user-role">{user?.role || 'doctor'}</div>
                         </div>
                         <button className="btn btn-ghost btn-sm" onClick={handleLogout} title={t('nav.logout', 'Logout')}>
-                            ↪
+                            <IconLogout size={16} />
                         </button>
                     </div>
                 </div>
