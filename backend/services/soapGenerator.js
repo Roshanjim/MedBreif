@@ -19,13 +19,13 @@ const { getDb, queryAll, queryOne, runSql } = require('../config/db');
 async function generateSOAP(visitId) {
     await getDb();
 
-    const visit = queryOne('SELECT * FROM visits WHERE id = ?', [visitId]);
+    const visit = await queryOne('SELECT * FROM visits WHERE id = ?', [visitId]);
     if (!visit) throw new Error('Visit not found');
 
     const extractedData = visit.extracted_data ? JSON.parse(visit.extracted_data) : {};
 
     // Get lab reports
-    const reports = queryAll('SELECT parsed_data FROM medical_reports WHERE visit_id = ?', [visitId]);
+    const reports = await queryAll('SELECT parsed_data FROM medical_reports WHERE visit_id = ?', [visitId]);
     const labResults = reports
         .map(r => { try { return JSON.parse(r.parsed_data); } catch { return null; } })
         .filter(Boolean)
@@ -42,7 +42,7 @@ async function generateSOAP(visitId) {
 
     // ─── Doctor SOAP (blank template or existing) ────────────────────────────
 
-    const existing = queryOne('SELECT * FROM soap_summaries WHERE visit_id = ?', [visitId]);
+    const existing = await queryOne('SELECT * FROM soap_summaries WHERE visit_id = ?', [visitId]);
 
     let doctorSoap;
     if (existing && existing.doctor_soap) {
@@ -62,9 +62,9 @@ async function generateSOAP(visitId) {
     const doctorSoapStr = JSON.stringify(doctorSoap);
 
     if (existing) {
-        runSql(`UPDATE soap_summaries SET ai_soap = ?, updated_at = datetime('now') WHERE visit_id = ?`, [aiSoapStr, visitId]);
+        await runSql(`UPDATE soap_summaries SET ai_soap = ?, updated_at = NOW() WHERE visit_id = ?`, [aiSoapStr, visitId]);
     } else {
-        runSql(`INSERT INTO soap_summaries (visit_id, ai_soap, doctor_soap) VALUES (?, ?, ?)`, [visitId, aiSoapStr, doctorSoapStr]);
+        await runSql(`INSERT INTO soap_summaries (visit_id, ai_soap, doctor_soap) VALUES (?, ?, ?)`, [visitId, aiSoapStr, doctorSoapStr]);
     }
 
     return { aiSoap, doctorSoap };
@@ -78,13 +78,13 @@ async function generateSOAP(visitId) {
 async function updateDoctorSOAP(visitId, doctorSoap) {
     await getDb();
 
-    const existing = queryOne('SELECT id FROM soap_summaries WHERE visit_id = ?', [visitId]);
+    const existing = await queryOne('SELECT id FROM soap_summaries WHERE visit_id = ?', [visitId]);
     const doctorSoapStr = JSON.stringify(doctorSoap);
 
     if (existing) {
-        runSql(`UPDATE soap_summaries SET doctor_soap = ?, updated_at = datetime('now') WHERE visit_id = ?`, [doctorSoapStr, visitId]);
+        await runSql(`UPDATE soap_summaries SET doctor_soap = ?, updated_at = NOW() WHERE visit_id = ?`, [doctorSoapStr, visitId]);
     } else {
-        runSql(`INSERT INTO soap_summaries (visit_id, ai_soap, doctor_soap) VALUES (?, ?, ?)`, [visitId, '{}', doctorSoapStr]);
+        await runSql(`INSERT INTO soap_summaries (visit_id, ai_soap, doctor_soap) VALUES (?, ?, ?)`, [visitId, '{}', doctorSoapStr]);
     }
 
     return { doctorSoap };

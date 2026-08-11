@@ -120,14 +120,14 @@ router.post('/summarize-text', async (req, res) => {
 router.post('/transcribe/:visitId', authenticateToken, async (req, res) => {
     try {
         await getDb();
-        const visit = queryOne('SELECT * FROM visits WHERE id = ? AND doctor_id = ?', [parseInt(req.params.visitId), req.user.id]);
+        const visit = await queryOne('SELECT * FROM visits WHERE id = ? AND doctor_id = ?', [parseInt(req.params.visitId), req.user.id]);
         if (!visit) return res.status(404).json({ error: 'Visit not found' });
 
         const { transcript, decisionLog } = await transcribeAudio(visit.audio_path);
         const existingLog = visit.ai_decision_log ? JSON.parse(visit.ai_decision_log) : {};
         existingLog.transcription = decisionLog;
 
-        runSql("UPDATE visits SET transcript = ?, status = 'reviewing', ai_decision_log = ?, updated_at = datetime('now') WHERE id = ?",
+        await runSql("UPDATE visits SET transcript = ?, status = 'reviewing', ai_decision_log = ?, updated_at = NOW() WHERE id = ?",
             [JSON.stringify(transcript), JSON.stringify(existingLog), visit.id]);
         res.json({ transcript, decisionLog });
     } catch (err) { console.error('Transcription error:', err); res.status(500).json({ error: 'Transcription failed' }); }
@@ -136,7 +136,7 @@ router.post('/transcribe/:visitId', authenticateToken, async (req, res) => {
 router.post('/extract/:visitId', authenticateToken, async (req, res) => {
     try {
         await getDb();
-        const visit = queryOne('SELECT * FROM visits WHERE id = ? AND doctor_id = ?', [parseInt(req.params.visitId), req.user.id]);
+        const visit = await queryOne('SELECT * FROM visits WHERE id = ? AND doctor_id = ?', [parseInt(req.params.visitId), req.user.id]);
         if (!visit) return res.status(404).json({ error: 'Visit not found' });
         const transcript = visit.transcript ? JSON.parse(visit.transcript) : null;
         if (!transcript) return res.status(400).json({ error: 'No transcript. Transcribe first.' });
@@ -145,7 +145,7 @@ router.post('/extract/:visitId', authenticateToken, async (req, res) => {
         const existingLog = visit.ai_decision_log ? JSON.parse(visit.ai_decision_log) : {};
         existingLog.extraction = decisionLog;
 
-        runSql("UPDATE visits SET extracted_data = ?, confidence_score = ?, ai_decision_log = ?, updated_at = datetime('now') WHERE id = ?",
+        await runSql("UPDATE visits SET extracted_data = ?, confidence_score = ?, ai_decision_log = ?, updated_at = NOW() WHERE id = ?",
             [JSON.stringify(extractedData), parseFloat(extractedData.ConfidenceScore) || 0, JSON.stringify(existingLog), visit.id]);
         res.json({ extractedData, decisionLog });
     } catch (err) { console.error('Extraction error:', err); res.status(500).json({ error: 'Extraction failed' }); }
@@ -154,7 +154,7 @@ router.post('/extract/:visitId', authenticateToken, async (req, res) => {
 router.post('/summarize/:visitId', authenticateToken, async (req, res) => {
     try {
         await getDb();
-        const visit = queryOne('SELECT * FROM visits WHERE id = ? AND doctor_id = ?', [parseInt(req.params.visitId), req.user.id]);
+        const visit = await queryOne('SELECT * FROM visits WHERE id = ? AND doctor_id = ?', [parseInt(req.params.visitId), req.user.id]);
         if (!visit) return res.status(404).json({ error: 'Visit not found' });
         const extractedData = visit.extracted_data ? JSON.parse(visit.extracted_data) : null;
         if (!extractedData) return res.status(400).json({ error: 'No extracted data. Run extraction first.' });
@@ -162,7 +162,7 @@ router.post('/summarize/:visitId', authenticateToken, async (req, res) => {
         const doctorSummary = generateDoctorSummary(extractedData);
         const patientSummary = generatePatientSummary(extractedData);
 
-        runSql("UPDATE visits SET doctor_summary = ?, patient_summary = ?, status = 'reviewing', updated_at = datetime('now') WHERE id = ?",
+        await runSql("UPDATE visits SET doctor_summary = ?, patient_summary = ?, status = 'reviewing', updated_at = NOW() WHERE id = ?",
             [doctorSummary, patientSummary, visit.id]);
         res.json({ doctorSummary, patientSummary });
     } catch (err) { console.error('Summarize error:', err); res.status(500).json({ error: 'Summary generation failed' }); }
@@ -177,7 +177,7 @@ router.post('/diagnose/:visitId', authenticateToken, async (req, res) => {
         const visitId = parseInt(req.params.visitId);
         await getDb();
 
-        const visit = queryOne('SELECT id FROM visits WHERE id = ? AND doctor_id = ?', [visitId, req.user.id]);
+        const visit = await queryOne('SELECT id FROM visits WHERE id = ? AND doctor_id = ?', [visitId, req.user.id]);
         if (!visit) return res.status(404).json({ error: 'Visit not found' });
 
         console.log(`[AI] Generating diagnosis for visit ${visitId}...`);
@@ -203,7 +203,7 @@ router.post('/soap/:visitId', authenticateToken, async (req, res) => {
         const visitId = parseInt(req.params.visitId);
         await getDb();
 
-        const visit = queryOne('SELECT id FROM visits WHERE id = ? AND doctor_id = ?', [visitId, req.user.id]);
+        const visit = await queryOne('SELECT id FROM visits WHERE id = ? AND doctor_id = ?', [visitId, req.user.id]);
         if (!visit) return res.status(404).json({ error: 'Visit not found' });
 
         console.log(`[AI] Generating SOAP summary for visit ${visitId}...`);
@@ -224,7 +224,7 @@ router.put('/soap/:visitId', authenticateToken, async (req, res) => {
         if (!doctorSoap) return res.status(400).json({ error: 'doctorSoap is required' });
 
         await getDb();
-        const visit = queryOne('SELECT id FROM visits WHERE id = ? AND doctor_id = ?', [visitId, req.user.id]);
+        const visit = await queryOne('SELECT id FROM visits WHERE id = ? AND doctor_id = ?', [visitId, req.user.id]);
         if (!visit) return res.status(404).json({ error: 'Visit not found' });
 
         const result = await updateDoctorSOAP(visitId, doctorSoap);

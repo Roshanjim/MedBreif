@@ -36,7 +36,7 @@ const upload = multer({
 });
 
 // POST /api/audio/upload
-router.post('/upload', authenticateToken, upload.single('audio'), (req, res) => {
+router.post('/upload', authenticateToken, upload.single('audio'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No audio file provided' });
@@ -44,7 +44,7 @@ router.post('/upload', authenticateToken, upload.single('audio'), (req, res) => 
 
         const visitId = req.body.visitId;
         if (visitId) {
-            runSql('UPDATE visits SET audio_path = ?, status = ? WHERE id = ? AND doctor_id = ?',
+            await runSql('UPDATE visits SET audio_path = ?, status = ? WHERE id = ? AND doctor_id = ?',
                 [req.file.filename, 'transcribing', parseInt(visitId), req.user.id]);
         }
 

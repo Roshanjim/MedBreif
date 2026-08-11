@@ -8,7 +8,7 @@ const router = express.Router();
 router.get('/:visitId', authenticateToken, async (req, res) => {
     try {
         await getDb();
-        const visit = queryOne('SELECT * FROM visits WHERE id = ? AND doctor_id = ?', [parseInt(req.params.visitId), req.user.id]);
+        const visit = await queryOne('SELECT * FROM visits WHERE id = ? AND doctor_id = ?', [parseInt(req.params.visitId), req.user.id]);
         if (!visit) return res.status(404).json({ error: 'Visit not found' });
         const extractedData = visit.extracted_data ? JSON.parse(visit.extracted_data) : null;
         if (!extractedData) return res.status(400).json({ error: 'No extracted data for PDF' });

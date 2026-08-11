@@ -55,14 +55,14 @@ async function generateDiagnosis(visitId) {
     await getDb();
 
     // Gather all context
-    const visit = queryOne('SELECT * FROM visits WHERE id = ?', [visitId]);
+    const visit = await queryOne('SELECT * FROM visits WHERE id = ?', [visitId]);
     if (!visit) throw new Error('Visit not found');
 
     const extractedData = visit.extracted_data ? JSON.parse(visit.extracted_data) : null;
     const transcript = visit.transcript ? (typeof visit.transcript === 'string' ? JSON.parse(visit.transcript) : visit.transcript) : null;
 
     // Get lab reports for this visit (both parsed data AND raw text)
-    const reports = queryAll('SELECT parsed_data, raw_text, report_type, original_filename FROM medical_reports WHERE visit_id = ?', [visitId]);
+    const reports = await queryAll('SELECT parsed_data, raw_text, report_type, original_filename FROM medical_reports WHERE visit_id = ?', [visitId]);
     const labResults = reports
         .map(r => { try { return JSON.parse(r.parsed_data); } catch { return null; } })
         .filter(Boolean);
@@ -107,9 +107,9 @@ async function generateDiagnosis(visitId) {
     }
 
     // Store in database
-    const existing = queryOne('SELECT id FROM ai_analysis WHERE visit_id = ?', [visitId]);
+    const existing = await queryOne('SELECT id FROM ai_analysis WHERE visit_id = ?', [visitId]);
     if (existing) {
-        runSql(`UPDATE ai_analysis SET possible_conditions = ?, suggested_tests = ?, treatment_considerations = ?, risk_flags = ?, context_used = ?, updated_at = datetime('now') WHERE visit_id = ?`, [
+        await runSql(`UPDATE ai_analysis SET possible_conditions = ?, suggested_tests = ?, treatment_considerations = ?, risk_flags = ?, context_used = ?, updated_at = NOW() WHERE visit_id = ?`, [
             JSON.stringify(analysis.possibleConditions),
             JSON.stringify(analysis.suggestedTests),
             JSON.stringify(analysis.treatmentConsiderations),
@@ -118,7 +118,7 @@ async function generateDiagnosis(visitId) {
             visitId
         ]);
     } else {
-        runSql(`INSERT INTO ai_analysis (visit_id, possible_conditions, suggested_tests, treatment_considerations, risk_flags, context_used) VALUES (?, ?, ?, ?, ?, ?)`, [
+        await runSql(`INSERT INTO ai_analysis (visit_id, possible_conditions, suggested_tests, treatment_considerations, risk_flags, context_used) VALUES (?, ?, ?, ?, ?, ?)`, [
             visitId,
             JSON.stringify(analysis.possibleConditions),
             JSON.stringify(analysis.suggestedTests),

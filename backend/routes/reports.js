@@ -57,7 +57,7 @@ router.post('/upload/:visitId', authenticateToken, upload.single('report'), asyn
         await getDb();
 
         // Verify visit belongs to the doctor
-        const visit = queryOne('SELECT id FROM visits WHERE id = ? AND doctor_id = ?', [visitId, req.user.id]);
+        const visit = await queryOne('SELECT id FROM visits WHERE id = ? AND doctor_id = ?', [visitId, req.user.id]);
         if (!visit) {
             // Clean up uploaded file
             fs.unlinkSync(req.file.path);
@@ -70,7 +70,7 @@ router.post('/upload/:visitId', authenticateToken, upload.single('report'), asyn
         const { rawText, parsed } = await parseReport(req.file.path, req.file.mimetype);
 
         // Store in database
-        const { lastId } = runSql(
+        const { lastId } = await runSql(
             `INSERT INTO medical_reports (visit_id, doctor_id, report_type, original_filename, file_path, mime_type, raw_text, parsed_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 visitId,
@@ -117,10 +117,10 @@ router.get('/visit/:visitId', authenticateToken, async (req, res) => {
         await getDb();
 
         // Verify visit belongs to doctor
-        const visit = queryOne('SELECT id FROM visits WHERE id = ? AND doctor_id = ?', [visitId, req.user.id]);
+        const visit = await queryOne('SELECT id FROM visits WHERE id = ? AND doctor_id = ?', [visitId, req.user.id]);
         if (!visit) return res.status(404).json({ error: 'Visit not found' });
 
-        const reports = queryAll('SELECT * FROM medical_reports WHERE visit_id = ? ORDER BY created_at DESC', [visitId]);
+        const reports = await queryAll('SELECT * FROM medical_reports WHERE visit_id = ? ORDER BY created_at DESC', [visitId]);
 
         // Parse the JSON fields
         const parsed = reports.map(r => ({
@@ -149,7 +149,7 @@ router.get('/:reportId', authenticateToken, async (req, res) => {
         const reportId = parseInt(req.params.reportId);
         await getDb();
 
-        const report = queryOne('SELECT * FROM medical_reports WHERE id = ? AND doctor_id = ?', [reportId, req.user.id]);
+        const report = await queryOne('SELECT * FROM medical_reports WHERE id = ? AND doctor_id = ?', [reportId, req.user.id]);
         if (!report) return res.status(404).json({ error: 'Report not found' });
 
         res.json({
@@ -178,7 +178,7 @@ router.delete('/:reportId', authenticateToken, async (req, res) => {
         const reportId = parseInt(req.params.reportId);
         await getDb();
 
-        const report = queryOne('SELECT * FROM medical_reports WHERE id = ? AND doctor_id = ?', [reportId, req.user.id]);
+        const report = await queryOne('SELECT * FROM medical_reports WHERE id = ? AND doctor_id = ?', [reportId, req.user.id]);
         if (!report) return res.status(404).json({ error: 'Report not found' });
 
         // Delete file from disk
@@ -186,7 +186,7 @@ router.delete('/:reportId', authenticateToken, async (req, res) => {
             fs.unlinkSync(report.file_path);
         }
 
-        runSql('DELETE FROM medical_reports WHERE id = ?', [reportId]);
+        await runSql('DELETE FROM medical_reports WHERE id = ?', [reportId]);
 
         res.json({ message: 'Report deleted successfully' });
     } catch (err) {
