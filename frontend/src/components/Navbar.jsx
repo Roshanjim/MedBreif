@@ -29,18 +29,31 @@ export default function Navbar() {
                 </div>
 
                 <nav className="sidebar-nav">
-                    <NavLink to="/" end className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                        onClick={() => setSidebarOpen(false)}>
-                        <span className="nav-icon">📊</span> Dashboard
-                    </NavLink>
-                    <NavLink to="/new" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                        onClick={() => setSidebarOpen(false)}>
-                        <span className="nav-icon">🎙️</span> New Consultation
-                    </NavLink>
-                    <NavLink to="/settings" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                        onClick={() => setSidebarOpen(false)}>
-                        <span className="nav-icon">⚙️</span> Settings
-                    </NavLink>
+                    {user?.role === 'patient' ? (
+                        <NavLink to={`/patients/${user.id}`} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                            onClick={() => setSidebarOpen(false)}>
+                            <span className="nav-icon">📂</span> My Records
+                        </NavLink>
+                    ) : (
+                        <>
+                            <NavLink to="/" end className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                                onClick={() => setSidebarOpen(false)}>
+                                <span className="nav-icon">📊</span> Dashboard
+                            </NavLink>
+                            <NavLink to="/new" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                                onClick={() => setSidebarOpen(false)}>
+                                <span className="nav-icon">🎙️</span> New Consultation
+                            </NavLink>
+                            <NavLink to="/patients" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                                onClick={() => setSidebarOpen(false)}>
+                                <span className="nav-icon">👥</span> Patients
+                            </NavLink>
+                            <NavLink to="/settings" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                                onClick={() => setSidebarOpen(false)}>
+                                <span className="nav-icon">⚙️</span> Settings
+                            </NavLink>
+                        </>
+                    )}
                 </nav>
 
                 <div className="sidebar-footer">

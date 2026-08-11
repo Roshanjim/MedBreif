@@ -35,6 +35,21 @@ async function getDb() {
     `);
 
     await connection.query(`
+      CREATE TABLE IF NOT EXISTS patients (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        doctor_id INT,
+        patient_uid VARCHAR(50) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        age INT,
+        gender VARCHAR(50),
+        medical_history LONGTEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (doctor_id) REFERENCES users(id) ON DELETE CASCADE,
+        UNIQUE (doctor_id, patient_uid)
+      )
+    `);
+
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS visits (
         id INT AUTO_INCREMENT PRIMARY KEY,
         doctor_id INT,
@@ -110,6 +125,18 @@ async function getDb() {
         FOREIGN KEY (visit_id) REFERENCES visits(id) ON DELETE CASCADE
       )
     `);
+
+    // Add patient_id to visits if not exists
+    try {
+        await connection.query('ALTER TABLE visits ADD COLUMN patient_id INT');
+        await connection.query('ALTER TABLE visits ADD CONSTRAINT fk_patient_visit FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE SET NULL');
+    } catch (e) { /* Ignore if exists */ }
+
+    // Add patient_id to medical_reports if not exists
+    try {
+        await connection.query('ALTER TABLE medical_reports ADD COLUMN patient_id INT');
+        await connection.query('ALTER TABLE medical_reports ADD CONSTRAINT fk_patient_report FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE');
+    } catch (e) { /* Ignore if exists */ }
 
     connection.release();
   } catch (err) {

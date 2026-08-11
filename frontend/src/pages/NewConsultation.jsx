@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import UploadReport from '../components/UploadReport';
 
 export default function NewConsultation() {
-    const [patientName, setPatientName] = useState('');
+    const location = useLocation();
+    const [patients, setPatients] = useState([]);
+    const [selectedPatientId, setSelectedPatientId] = useState(location.state?.patientId || '');
+    const [patientName, setPatientName] = useState(location.state?.patientName || '');
     const [isRecording, setIsRecording] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
     const [audioBlob, setAudioBlob] = useState(null);
@@ -103,6 +106,7 @@ export default function NewConsultation() {
         try {
             // 1. Create visit
             const { visit } = await api.createVisit({
+                patient_id: selectedPatientId || null,
                 patient_name: patientName || 'Unknown Patient'
             });
 
@@ -129,6 +133,7 @@ export default function NewConsultation() {
     };
 
     useEffect(() => {
+        api.getPatients().then(data => setPatients(data.patients)).catch(console.error);
         return () => {
             clearInterval(timerRef.current);
             cancelAnimationFrame(animFrameRef.current);
@@ -159,14 +164,37 @@ export default function NewConsultation() {
 
             <div className="card" style={{ marginBottom: 24 }}>
                 <div className="input-group">
-                    <label>Patient Name</label>
-                    <input
-                        type="text"
-                        className="input"
-                        placeholder="Enter patient name"
-                        value={patientName}
-                        onChange={e => setPatientName(e.target.value)}
-                    />
+                    <label>Select Patient</label>
+                    <div style={{ display: 'flex', gap: 12 }}>
+                        <select
+                            className="input"
+                            value={selectedPatientId}
+                            onChange={e => {
+                                setSelectedPatientId(e.target.value);
+                                const p = patients.find(p => p.id.toString() === e.target.value);
+                                if (p) setPatientName(p.name);
+                            }}
+                            style={{ flex: 1 }}
+                        >
+                            <option value="">-- Select Registered Patient --</option>
+                            {patients.map(p => (
+                                <option key={p.id} value={p.id}>{p.name} ({p.patient_uid})</option>
+                            ))}
+                        </select>
+                        <button className="btn btn-ghost" onClick={() => navigate('/patients/new')}>+ New</button>
+                    </div>
+                    {!selectedPatientId && (
+                        <div style={{ marginTop: 12 }}>
+                            <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Or enter name manually (Unregistered)</label>
+                            <input
+                                type="text"
+                                className="input"
+                                placeholder="Enter patient name"
+                                value={patientName}
+                                onChange={e => setPatientName(e.target.value)}
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
 

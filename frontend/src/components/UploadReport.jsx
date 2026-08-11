@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { api } from '../api/client';
 
-export default function UploadReport({ visitId, onUploadComplete }) {
+export default function UploadReport({ visitId, patientId, onUploadComplete }) {
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState('');
     const [result, setResult] = useState(null);
@@ -29,7 +29,12 @@ export default function UploadReport({ visitId, onUploadComplete }) {
         try {
             const formData = new FormData();
             formData.append('report', file);
-            const data = await api.uploadReport(visitId, formData);
+            let data;
+            if (patientId) {
+                data = await api.uploadPatientReport(patientId, formData);
+            } else {
+                data = await api.uploadReport(visitId, formData);
+            }
             setResult(data.report);
             if (onUploadComplete) onUploadComplete(data.report);
         } catch (err) {

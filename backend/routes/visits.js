@@ -7,7 +7,7 @@ const router = express.Router();
 router.get('/', authenticateToken, async (req, res) => {
     try {
         await getDb();
-        const visits = await queryAll('SELECT id, patient_name, visit_date, status, confidence_score, created_at, updated_at FROM visits WHERE doctor_id = ? ORDER BY created_at DESC', [req.user.id]);
+        const visits = await queryAll('SELECT id, patient_id, patient_name, visit_date, status, confidence_score, created_at, updated_at FROM visits WHERE doctor_id = ? ORDER BY created_at DESC', [req.user.id]);
         res.json({ visits });
     } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to fetch visits' }); }
 });
@@ -25,10 +25,17 @@ router.get('/:id', authenticateToken, async (req, res) => {
 
 router.post('/', authenticateToken, async (req, res) => {
     try {
-        const { patient_name, visit_date } = req.body;
+        const { patient_name, visit_date, patient_id } = req.body;
         await getDb();
-        const { lastId } = await runSql('INSERT INTO visits (doctor_id, patient_name, visit_date) VALUES (?, ?, ?)',
-            [req.user.id, patient_name || 'Unknown Patient', visit_date || new Date().toISOString().split('T')[0]]);
+
+        let pid = null;
+        if (patient_id) {
+            const p = await queryOne('SELECT id, name FROM patients WHERE id = ? AND doctor_id = ?', [patient_id, req.user.id]);
+            if (p) pid = p.id;
+        }
+
+        const { lastId } = await runSql('INSERT INTO visits (doctor_id, patient_id, patient_name, visit_date) VALUES (?, ?, ?, ?)',
+            [req.user.id, pid, patient_name || 'Unknown Patient', visit_date || new Date().toISOString().split('T')[0]]);
         const visit = await queryOne('SELECT * FROM visits WHERE id = ?', [lastId]);
         res.status(201).json({ visit });
     } catch (err) { console.error('Create visit error:', err); res.status(500).json({ error: 'Failed to create visit' }); }
@@ -40,7 +47,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
         const check = await queryOne('SELECT id FROM visits WHERE id = ? AND doctor_id = ?', [parseInt(req.params.id), req.user.id]);
         if (!check) return res.status(404).json({ error: 'Visit not found' });
 
-        const fields = ['patient_name', 'status', 'transcript', 'doctor_summary', 'patient_summary', 'confidence_score', 'doctor_signature'];
+        const fields = ['patient_id', 'patient_name', 'status', 'transcript', 'doctor_summary', 'patient_summary', 'confidence_score', 'doctor_signature'];
         const updates = []; const values = [];
         fields.forEach(f => { if (req.body[f] !== undefined) { updates.push(`${f} = ?`); values.push(req.body[f]); } });
         if (req.body.extracted_data !== undefined) { updates.push('extracted_data = ?'); values.push(typeof req.body.extracted_data === 'string' ? req.body.extracted_data : JSON.stringify(req.body.extracted_data)); }

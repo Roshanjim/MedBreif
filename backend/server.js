@@ -12,6 +12,7 @@ const aiRoutes = require('./routes/ai');
 const pdfRoutes = require('./routes/pdf');
 const reportRoutes = require('./routes/reports');
 const feedbackRoutes = require('./routes/feedback');
+const patientRoutes = require('./routes/patients');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -51,6 +52,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/pdf', pdfRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/ai-feedback', feedbackRoutes);
+app.use('/api/patients', patientRoutes);
 
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, 'public')));

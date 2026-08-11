@@ -108,6 +108,44 @@ router.post('/upload/:visitId', authenticateToken, upload.single('report'), asyn
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
+//  POST /api/reports/upload/patient/:patientId — Upload & parse a medical report for a patient
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post('/upload/patient/:patientId', authenticateToken, upload.single('report'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No report file provided. Use field name "report".' });
+        }
+
+        const patientId = parseInt(req.params.patientId);
+        await getDb();
+
+        const patient = await queryOne('SELECT id FROM patients WHERE id = ? AND doctor_id = ?', [patientId, req.user.id]);
+        if (!patient) {
+            fs.unlinkSync(req.file.path);
+            return res.status(404).json({ error: 'Patient not found' });
+        }
+
+        console.log(`[Reports] Parsing patient report: ${req.file.originalname}`);
+        const { rawText, parsed } = await parseReport(req.file.path, req.file.mimetype);
+
+        const { lastId } = await runSql(
+            `INSERT INTO medical_reports (patient_id, doctor_id, report_type, original_filename, file_path, mime_type, raw_text, parsed_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [patientId, req.user.id, parsed.reportType || 'Lab Report', req.file.originalname, req.file.path, req.file.mimetype, rawText, JSON.stringify(parsed)]
+        );
+
+        res.status(201).json({
+            message: 'Patient report uploaded',
+            report: { id: lastId, patientId, reportType: parsed.reportType, filename: req.file.originalname }
+        });
+    } catch (err) {
+        console.error('[Reports] Upload error:', err);
+        if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        res.status(500).json({ error: err.message || 'Report upload failed' });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
 //  GET /api/reports/visit/:visitId — Get all reports for a visit
 // ═══════════════════════════════════════════════════════════════════════════════
 

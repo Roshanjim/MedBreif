@@ -1,15 +1,15 @@
-const API_BASE = '/api';
+export const API_BASE = '/api';
 
 async function request(endpoint, options = {}) {
     const token = localStorage.getItem('medbrief_token');
 
     const config = {
+        ...options,
         headers: {
             'Content-Type': 'application/json',
             ...(token && { Authorization: `Bearer ${token}` }),
-            ...options.headers,
+            ...(options.headers || {}),
         },
-        ...options,
     };
 
     // Don't set Content-Type for FormData
@@ -31,6 +31,8 @@ export const api = {
     // Auth
     register: (data) => request('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
     login: (data) => request('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
+    patientRegister: (data) => request('/auth/patient-register', { method: 'POST', body: JSON.stringify(data) }),
+    patientLogin: (data) => request('/auth/patient-login', { method: 'POST', body: JSON.stringify(data) }),
     getProfile: () => request('/auth/me'),
 
     // Visits
@@ -41,7 +43,7 @@ export const api = {
     deleteVisit: (id) => request(`/visits/${id}`, { method: 'DELETE' }),
 
     // Audio
-    uploadAudio: (formData) => request('/audio/upload', { method: 'POST', body: formData, headers: {} }),
+    uploadAudio: (formData) => request('/audio/upload', { method: 'POST', body: formData }),
 
     // AI Pipeline
     transcribe: (visitId) => request(`/ai/transcribe/${visitId}`, { method: 'POST' }),
@@ -56,10 +58,17 @@ export const api = {
     updateDoctorSOAP: (visitId, doctorSoap) => request(`/ai/soap/${visitId}`, { method: 'PUT', body: JSON.stringify({ doctorSoap }) }),
 
     // Medical Reports
-    uploadReport: (visitId, formData) => request(`/reports/upload/${visitId}`, { method: 'POST', body: formData, headers: {} }),
+    uploadReport: (visitId, formData) => request(`/reports/upload/${visitId}`, { method: 'POST', body: formData }),
+    uploadPatientReport: (patientId, formData) => request(`/reports/upload/patient/${patientId}`, { method: 'POST', body: formData }),
     getVisitReports: (visitId) => request(`/reports/visit/${visitId}`),
     getReport: (reportId) => request(`/reports/${reportId}`),
     deleteReport: (reportId) => request(`/reports/${reportId}`, { method: 'DELETE' }),
+
+    // Patients
+    getPatients: () => request('/patients'),
+    getPatient: (id) => request(`/patients/${id}`),
+    createPatient: (data) => request('/patients', { method: 'POST', body: JSON.stringify(data) }),
+    updatePatient: (id, data) => request(`/patients/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 
     // Doctor Feedback
     submitFeedback: (visitId, feedback) => request('/ai-feedback', { method: 'POST', body: JSON.stringify({ visitId, feedback }) }),
