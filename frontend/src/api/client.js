@@ -36,6 +36,7 @@ export const api = {
     patientRegister: (data) => request('/auth/patient-register', { method: 'POST', body: JSON.stringify(data) }),
     patientLogin: (data) => request('/auth/patient-login', { method: 'POST', body: JSON.stringify(data) }),
     getProfile: () => request('/auth/me'),
+    updateProfile: (data) => request('/auth/me', { method: 'PUT', body: JSON.stringify(data) }),
 
     // Visits
     getVisits: () => request('/visits'),

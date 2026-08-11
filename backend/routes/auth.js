@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.post('/register', async (req, res) => {
     try {
-        const { name, email, password, role } = req.body;
+        const { name, email, password, role, hospital_name } = req.body;
         if (!name || !email || !password) return res.status(400).json({ error: 'Name, email, and password are required' });
 
         await getDb();
@@ -17,10 +17,10 @@ router.post('/register', async (req, res) => {
 
         const password_hash = bcrypt.hashSync(password, 10);
         const userRole = role === 'admin' ? 'admin' : 'doctor';
-        const { lastId } = await runSql('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)', [name, email, password_hash, userRole]);
+        const { lastId } = await runSql('INSERT INTO users (name, email, password_hash, role, hospital_name) VALUES (?, ?, ?, ?, ?)', [name, email, password_hash, userRole, hospital_name || null]);
 
-        const token = jwt.sign({ id: lastId, email, name, role: userRole }, JWT_SECRET, { expiresIn: '24h' });
-        res.status(201).json({ message: 'Registration successful', token, user: { id: lastId, name, email, role: userRole } });
+        const token = jwt.sign({ id: lastId, email, name, role: userRole, hospital_name: hospital_name || null }, JWT_SECRET, { expiresIn: '24h' });
+        res.status(201).json({ message: 'Registration successful', token, user: { id: lastId, name, email, role: userRole, hospital_name: hospital_name || null } });
     } catch (err) { console.error('Register error:', err); res.status(500).json({ error: 'Registration failed' }); }
 });
 
@@ -96,11 +96,33 @@ router.get('/me', authenticateToken, async (req, res) => {
             if (!user) return res.status(404).json({ error: 'Patient not found' });
             return res.json({ user: { ...user, role: 'patient' } });
         } else {
-            const user = await queryOne('SELECT id, name, email, role, created_at FROM users WHERE id = ?', [req.user.id]);
+            const user = await queryOne('SELECT id, name, email, role, hospital_name, created_at FROM users WHERE id = ?', [req.user.id]);
             if (!user) return res.status(404).json({ error: 'User not found' });
             return res.json({ user });
         }
     } catch (err) { res.status(500).json({ error: 'Failed to fetch profile' }); }
+});
+
+router.put('/me', authenticateToken, async (req, res) => {
+    try {
+        await getDb();
+        if (req.user.role === 'patient') {
+            return res.status(403).json({ error: 'Patients cannot update doctor profile' });
+        }
+
+        const { name, hospital_name } = req.body;
+        const fields = []; const values = [];
+        if (name !== undefined) { fields.push('name = ?'); values.push(name); }
+        if (hospital_name !== undefined) { fields.push('hospital_name = ?'); values.push(hospital_name); }
+
+        if (fields.length > 0) {
+            values.push(req.user.id);
+            await runSql(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`, values);
+        }
+
+        const user = await queryOne('SELECT id, name, email, role, hospital_name, created_at FROM users WHERE id = ?', [req.user.id]);
+        res.json({ user });
+    } catch (err) { console.error('Update profile error:', err); res.status(500).json({ error: 'Failed to update profile' }); }
 });
 
 module.exports = router;

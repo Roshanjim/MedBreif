@@ -9,9 +9,25 @@ router.get('/', authenticateToken, async (req, res) => {
         await getDb();
         let visits;
         if (req.user.role === 'patient') {
-            visits = await queryAll('SELECT id, doctor_id, patient_id, patient_name, visit_date, status, confidence_score, created_at, updated_at FROM visits WHERE patient_id = ? ORDER BY created_at DESC', [req.user.id]);
+            const p = await queryOne('SELECT name FROM patients WHERE id = ?', [req.user.id]);
+            const pName = p ? p.name : '';
+            visits = await queryAll(`
+                SELECT v.id, v.doctor_id, v.patient_id, v.patient_name, v.visit_date, v.status, v.confidence_score, v.created_at, v.updated_at,
+                       u.name AS doctor_name, u.hospital_name
+                FROM visits v
+                LEFT JOIN users u ON v.doctor_id = u.id
+                WHERE v.patient_id = ? OR (LOWER(v.patient_name) = LOWER(?) AND ? != "")
+                ORDER BY v.created_at DESC
+            `, [req.user.id, pName, pName]);
         } else {
-            visits = await queryAll('SELECT id, doctor_id, patient_id, patient_name, visit_date, status, confidence_score, created_at, updated_at FROM visits WHERE doctor_id = ? ORDER BY created_at DESC', [req.user.id]);
+            visits = await queryAll(`
+                SELECT v.id, v.doctor_id, v.patient_id, v.patient_name, v.visit_date, v.status, v.confidence_score, v.created_at, v.updated_at,
+                       u.name AS doctor_name, u.hospital_name
+                FROM visits v
+                LEFT JOIN users u ON v.doctor_id = u.id
+                WHERE v.doctor_id = ?
+                ORDER BY v.created_at DESC
+            `, [req.user.id]);
         }
         res.json({ visits });
     } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to fetch visits' }); }
@@ -22,9 +38,21 @@ router.get('/:id', authenticateToken, async (req, res) => {
         await getDb();
         let visit;
         if (req.user.role === 'patient') {
-            visit = await queryOne('SELECT * FROM visits WHERE id = ? AND patient_id = ?', [parseInt(req.params.id), req.user.id]);
+            const p = await queryOne('SELECT name FROM patients WHERE id = ?', [req.user.id]);
+            const pName = p ? p.name : '';
+            visit = await queryOne(`
+                SELECT v.*, u.name AS doctor_name, u.hospital_name
+                FROM visits v
+                LEFT JOIN users u ON v.doctor_id = u.id
+                WHERE v.id = ? AND (v.patient_id = ? OR (LOWER(v.patient_name) = LOWER(?) AND ? != ""))
+            `, [parseInt(req.params.id), req.user.id, pName, pName]);
         } else {
-            visit = await queryOne('SELECT * FROM visits WHERE id = ? AND doctor_id = ?', [parseInt(req.params.id), req.user.id]);
+            visit = await queryOne(`
+                SELECT v.*, u.name AS doctor_name, u.hospital_name
+                FROM visits v
+                LEFT JOIN users u ON v.doctor_id = u.id
+                WHERE v.id = ?
+            `, [parseInt(req.params.id)]);
         }
         
         if (!visit) return res.status(404).json({ error: 'Visit not found' });
@@ -41,7 +69,11 @@ router.post('/', authenticateToken, async (req, res) => {
 
         let pid = null;
         if (patient_id) {
-            const p = await queryOne('SELECT id, name FROM patients WHERE id = ? AND doctor_id = ?', [patient_id, req.user.id]);
+            const p = await queryOne('SELECT id, name FROM patients WHERE id = ? AND (doctor_id = ? OR doctor_id IS NULL)', [patient_id, req.user.id]);
+            if (p) pid = p.id;
+        }
+        if (!pid && patient_name) {
+            const p = await queryOne('SELECT id FROM patients WHERE LOWER(name) = LOWER(?) AND (doctor_id = ? OR doctor_id IS NULL)', [patient_name.trim(), req.user.id]);
             if (p) pid = p.id;
         }
 
@@ -55,7 +87,7 @@ router.post('/', authenticateToken, async (req, res) => {
 router.put('/:id', authenticateToken, async (req, res) => {
     try {
         await getDb();
-        const check = await queryOne('SELECT id FROM visits WHERE id = ? AND doctor_id = ?', [parseInt(req.params.id), req.user.id]);
+        const check = await queryOne('SELECT id FROM visits WHERE id = ?', [parseInt(req.params.id)]);
         if (!check) return res.status(404).json({ error: 'Visit not found' });
 
         const fields = ['patient_id', 'patient_name', 'status', 'transcript', 'doctor_summary', 'patient_summary', 'confidence_score', 'doctor_signature'];
@@ -74,7 +106,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {
         await getDb();
-        const check = await queryOne('SELECT id FROM visits WHERE id = ? AND doctor_id = ?', [parseInt(req.params.id), req.user.id]);
+        const check = await queryOne('SELECT id FROM visits WHERE id = ?', [parseInt(req.params.id)]);
         if (!check) return res.status(404).json({ error: 'Visit not found' });
         await runSql('DELETE FROM visits WHERE id = ?', [parseInt(req.params.id)]);
         res.json({ message: 'Visit deleted' });

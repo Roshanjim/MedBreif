@@ -30,6 +30,7 @@ async function getDb() {
         email VARCHAR(255) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
         role ENUM('doctor', 'admin') DEFAULT 'doctor',
+        hospital_name VARCHAR(255),
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -136,6 +137,11 @@ async function getDb() {
     try {
         await connection.query('ALTER TABLE medical_reports ADD COLUMN patient_id INT');
         await connection.query('ALTER TABLE medical_reports ADD CONSTRAINT fk_patient_report FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE');
+    } catch (e) { /* Ignore if exists */ }
+
+    // Add hospital_name to users if not exists
+    try {
+        await connection.query('ALTER TABLE users ADD COLUMN hospital_name VARCHAR(255)');
     } catch (e) { /* Ignore if exists */ }
 
     connection.release();

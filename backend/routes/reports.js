@@ -171,8 +171,7 @@ router.get('/visit/:visitId', authenticateToken, async (req, res) => {
         const visitId = parseInt(req.params.visitId);
         await getDb();
 
-        // Verify visit belongs to doctor
-        const visit = await queryOne('SELECT id FROM visits WHERE id = ? AND doctor_id = ?', [visitId, req.user.id]);
+        const visit = await queryOne('SELECT id FROM visits WHERE id = ?', [visitId]);
         if (!visit) return res.status(404).json({ error: 'Visit not found' });
 
         const reports = await queryAll('SELECT * FROM medical_reports WHERE visit_id = ? ORDER BY created_at DESC', [visitId]);

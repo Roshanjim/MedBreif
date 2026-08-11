@@ -197,8 +197,13 @@ export default function PatientDetails() {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                 {visits.map(v => (
                                     <div key={v.id} className="visit-card" onClick={() => navigate(user?.role === 'patient' ? `/visit/${v.id}` : `/visit/${v.id}/summary`)} style={{ cursor: 'pointer', margin: 0 }}>
-                                        <div className="visit-header">
-                                            <div className="visit-date">{new Date(v.visit_date).toLocaleDateString()}</div>
+                                        <div className="visit-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div>
+                                                <div className="visit-date" style={{ fontWeight: 600 }}>{new Date(v.visit_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+                                                    👨‍⚕️ {v.doctor_name || 'Attending Physician'} {v.hospital_name ? `• 🏥 ${v.hospital_name}` : ''}
+                                                </div>
+                                            </div>
                                             <span className={`status-badge status-${v.status}`}>
                                                 {v.status.charAt(0).toUpperCase() + v.status.slice(1)}
                                             </span>

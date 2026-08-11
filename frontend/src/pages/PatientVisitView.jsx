@@ -82,6 +82,18 @@ export default function PatientVisitView() {
                 </div>
             )}
 
+            <div className="card" style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+                <div className="user-avatar" style={{ width: 48, height: 48, fontSize: '1.2rem', background: 'var(--primary-color)' }}>
+                    👨‍⚕️
+                </div>
+                <div>
+                    <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{visit.doctor_name || 'Attending Physician'}</h3>
+                    <p style={{ margin: '2px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                        🏥 {visit.hospital_name || 'Medical Center / Clinic'}
+                    </p>
+                </div>
+            </div>
+
             <div className="two-col" style={{ marginTop: 24 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                     <div className="card">

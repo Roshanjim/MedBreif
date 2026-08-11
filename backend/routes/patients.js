@@ -38,7 +38,14 @@ router.get('/:id', authenticateToken, async (req, res) => {
             try { patient.medical_history = JSON.parse(patient.medical_history); } catch (e) {}
         }
 
-        const visits = await queryAll('SELECT id, visit_date, status, confidence_score, created_at FROM visits WHERE patient_id = ? ORDER BY visit_date DESC', [patient.id]);
+        const visits = await queryAll(`
+            SELECT v.id, v.visit_date, v.status, v.confidence_score, v.created_at,
+                   u.name AS doctor_name, u.hospital_name
+            FROM visits v
+            LEFT JOIN users u ON v.doctor_id = u.id
+            WHERE v.patient_id = ? OR LOWER(v.patient_name) = LOWER(?)
+            ORDER BY v.visit_date DESC
+        `, [patient.id, patient.name]);
         const reports = await queryAll('SELECT id, report_type, original_filename, created_at FROM medical_reports WHERE patient_id = ? ORDER BY created_at DESC', [patient.id]);
 
         res.json({ patient, visits, reports });

@@ -14,6 +14,7 @@ export default function Login() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [hospitalName, setHospitalName] = useState('');
     const [role, setRole] = useState('doctor');
 
     // Patient Form State
@@ -56,7 +57,7 @@ export default function Login() {
         try {
             if (authMode === 'doctor') {
                 if (viewMode === 'register') {
-                    await register(name, email, password, role);
+                    await register(name, email, password, role, hospitalName);
                 } else {
                     await login(email, password);
                 }
@@ -131,14 +132,20 @@ export default function Login() {
                                 <input type="password" className="input" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
                             </div>
 
-                            {viewMode === 'register' && (
-                                <div className="input-group">
-                                    <label>Role</label>
-                                    <select className="input" value={role} onChange={e => setRole(e.target.value)}>
-                                        <option value="doctor">Doctor</option>
-                                        <option value="admin">Admin</option>
-                                    </select>
-                                </div>
+                             {viewMode === 'register' && (
+                                <>
+                                    <div className="input-group">
+                                        <label>Hospital / Clinic Name</label>
+                                        <input type="text" className="input" placeholder="e.g. City General Hospital, Kochi" value={hospitalName} onChange={e => setHospitalName(e.target.value)} />
+                                    </div>
+                                    <div className="input-group">
+                                        <label>Role</label>
+                                        <select className="input" value={role} onChange={e => setRole(e.target.value)}>
+                                            <option value="doctor">Doctor</option>
+                                            <option value="admin">Admin</option>
+                                        </select>
+                                    </div>
+                                </>
                             )}
                         </>
                     )}

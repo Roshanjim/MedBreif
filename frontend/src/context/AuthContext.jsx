@@ -34,8 +34,8 @@ export function AuthProvider({ children }) {
         return data;
     };
 
-    const register = async (name, email, password, role) => {
-        const data = await api.register({ name, email, password, role });
+    const register = async (name, email, password, role, hospital_name) => {
+        const data = await api.register({ name, email, password, role, hospital_name });
         localStorage.setItem('medbrief_token', data.token);
         setToken(data.token);
         setUser(data.user);
@@ -64,8 +64,12 @@ export function AuthProvider({ children }) {
         setUser(null);
     };
 
+    const updateUser = (updatedUser) => {
+        setUser(updatedUser);
+    };
+
     return (
-        <AuthContext.Provider value={{ user, token, loading, login, register, patientLogin, patientRegister, logout }}>
+        <AuthContext.Provider value={{ user, token, loading, login, register, patientLogin, patientRegister, logout, updateUser }}>
             {children}
         </AuthContext.Provider>
     );
