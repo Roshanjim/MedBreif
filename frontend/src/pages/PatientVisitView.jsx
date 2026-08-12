@@ -52,7 +52,7 @@ export default function PatientVisitView() {
                     {isFinalized && (
                         <button className="btn btn-secondary" onClick={() => {
                             const token = localStorage.getItem('medbrief_token');
-                            fetch(`/api/pdf/${id}`, {
+                            fetch(`${API_BASE}/pdf/${id}`, {
                                 headers: { Authorization: `Bearer ${token}` }
                             }).then(res => res.blob()).then(blob => {
                                 const url = URL.createObjectURL(blob);

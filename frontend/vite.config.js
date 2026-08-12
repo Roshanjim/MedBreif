@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
+    base: '/MedBreif/',
     plugins: [react()],
     root: __dirname,
     build: {
@@ -17,7 +18,7 @@ export default defineConfig({
         host: true,
         proxy: {
             '/api': {
-                target: 'http://localhost:5000',
+                target: 'http://localhost:5001',
                 changeOrigin: true
             }
         }
