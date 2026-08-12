@@ -3,51 +3,57 @@
    Dark teal, warm white, muted blue, soft mint & coral
    =================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
 
 :root {
-  /* Human-Centric Medical Palette */
-  --bg-primary: #faf9f6;          /* Warm white / linen background */
-  --bg-secondary: #ffffff;        /* Pure white cards */
+  /* Clean, Premium Light Medical Palette */
+  --bg-primary: #f8fafc;          
+  --bg-secondary: #ffffff;        
   --bg-card: #ffffff;
-  --bg-card-hover: #f4f7f6;
+  --bg-card-hover: #f1f5f9;
   --bg-input: #ffffff;
-  --bg-teal-dark: #0f4c5c;        /* Rich dark teal */
-  --bg-teal-light: #e6f4f1;       /* Soft mint background */
+  
+  --bg-teal-dark: #0f4c5c;        
+  --bg-teal-light: #e6f4f1;       
   --bg-subtle: #f1f5f9;
 
   --accent-teal: #0f4c5c;
   --accent-teal-hover: #0c3e4a;
+  --accent-teal-glow: rgba(15, 76, 92, 0.15);
+  
   --accent-mint: #ccfbf1;
   --accent-blue: #2b4c7e;
-  --accent-coral: #e05638;        /* Muted coral accent */
-  --accent-success: #0f766e;      /* Deep mint green */
-  --accent-warning: #b45309;      /* Muted amber */
-  --accent-danger: #be123c;       /* Muted crimson */
+  --accent-coral: #e05638;        
+  
+  --accent-success: #0f766e;      
+  --accent-warning: #b45309;      
+  --accent-danger: #be123c;       
 
-  --text-primary: #1e293b;        /* Deep slate text */
-  --text-secondary: #475569;      /* Medium slate */
-  --text-muted: #64748b;          /* Muted slate */
-  --text-light: #f8fafc;
+  --text-primary: #1e293b;        
+  --text-secondary: #475569;      
+  --text-muted: #64748b;          
+  --text-light: #ffffff;
   --text-teal: #0f4c5c;
 
   --border-color: #e2e8f0;
   --border-subtle: #cbd5e1;
   --border-focus: #0f4c5c;
 
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 4px 12px rgba(15, 76, 92, 0.06);
-  --shadow-lg: 0 12px 24px -4px rgba(15, 76, 92, 0.08);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-glow: 0 0 0 transparent;
 
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-full: 9999px;
 
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.25s ease;
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-  --font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family: 'Outfit', -apple-system, sans-serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
 
   --sidebar-width: 250px;
   --header-height: 64px;
@@ -68,7 +74,7 @@ html {
 }
 
 body {
-  font-family: var(--font-family);
+  font-family: var(--font-body);
   background: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
@@ -222,7 +228,7 @@ select.input {
 
 /* Cards & Panels */
 .card {
-  background: #ffffff;
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 28px;
@@ -288,6 +294,7 @@ select.input {
 .sidebar {
   width: var(--sidebar-width);
   background: var(--bg-teal-dark);
+  border-right: 1px solid var(--border-color);
   color: #ffffff;
   padding: 24px 0;
   display: flex;

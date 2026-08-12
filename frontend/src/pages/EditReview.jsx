@@ -56,7 +56,7 @@ export default function EditReview() {
 
     const handleDownloadPDF = () => {
         const token = localStorage.getItem('medbrief_token');
-        fetch(`/api/pdf/${id}`, {
+        fetch(`${API_BASE}/pdf/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => res.blob())
