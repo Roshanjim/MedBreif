@@ -4,7 +4,7 @@ Complete guide to set up speech-to-text transcription and medical data extractio
 
 ---
 
-## System Requirements
+## Systems Requirements
 
 | Component | Requirement |
 |-----------|------------|
